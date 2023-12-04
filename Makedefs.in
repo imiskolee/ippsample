@@ -46,7 +46,7 @@ CPPFLAGS	=	-I.. -I../libcups -I../pdfio @CPPFLAGS@
 CSFLAGS		=	-s "$(CODESIGN_IDENTITY)" @CSFLAGS@ --timestamp
 INSTALL		=	@INSTALL@
 LDFLAGS		=	@LDFLAGS@ $(OPTIM)
-LIBS		=	-L../libcups/cups `PKG_CONFIG_PATH=../libcups pkg-config --libs cups3` @LIBS@
+LIBS		=	-L../libcups/cups `PKG_CONFIG_PATH=../libcups pkg-config --libs cups3` -lcurl @LIBS@
 OPTIM		=	@OPTIM@
 WARNINGS	=	@WARNINGS@
 

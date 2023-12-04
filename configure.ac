@@ -117,7 +117,6 @@ AS_IF([test x$enable_shared != xno], [
     LIBS="$LIBS -lm"
 ])
 
-
 dnl PAM support...
 AC_ARG_ENABLE([pam], AS_HELP_STRING([--enable-libpam], [use libpam for authentication, default=auto]))
 
