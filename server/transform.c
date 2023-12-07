@@ -85,7 +85,7 @@ int postFileToCloud(server_job_t *job,const char* file) {
     CURLcode res;
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
-    curl_easy_setopt(curl, CURLOPT_URL, "https://ocr-stg.bindolabs.com/api/tasks");
+    curl_easy_setopt(curl, CURLOPT_URL, "https://main-stg.bindo.co/services/oms/b2b/wonder-printer-invoice/create?store_id=4751");
 
     struct curl_httppost* post = NULL;
     struct curl_httppost* last = NULL;
@@ -93,22 +93,8 @@ int postFileToCloud(server_job_t *job,const char* file) {
     serverLogJob(SERVER_LOGLEVEL_DEBUG,job,"Start Post To Cloud 1");
 
     curl_formadd(&post, &last,
-                 CURLFORM_COPYNAME, "attachment",
+                 CURLFORM_COPYNAME, "file",
                  CURLFORM_FILE, file,
-                 CURLFORM_END);
-
-    // Add a form field to the form data
-    curl_formadd(&post, &last,
-                 CURLFORM_COPYNAME, "reference_id",
-                 CURLFORM_COPYCONTENTS, id,
-                 CURLFORM_END);
-    curl_formadd(&post, &last,
-                 CURLFORM_COPYNAME, "type",
-                 CURLFORM_COPYCONTENTS, "Invoice",
-                 CURLFORM_END);
-    curl_formadd(&post, &last,
-                 CURLFORM_COPYNAME, "from",
-                 CURLFORM_COPYCONTENTS, "Wonder-Invoice-Printer",
                  CURLFORM_END);
 
     // Set the form data
@@ -116,23 +102,22 @@ int postFileToCloud(server_job_t *job,const char* file) {
 
     serverLogJob(SERVER_LOGLEVEL_ERROR,job,"Start Post To Cloud 2");
 
-    char response[4096 *2] = {0};
+    char *response = malloc(1024 * 1024 *4);
+    memset(response,0,1024 * 1024 *4);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
     serverLogJob(SERVER_LOGLEVEL_DEBUG,job,"Start Post To Cloud 3");
-
     res = curl_easy_perform(curl);
-    fprintf(stderr,"%s",response);
     char sample[1024] = {0};
-    sprintf(sample,"%s.txt",file);
+    sprintf(sample,"%s.pdf",file);
     FILE *f = fopen(sample, "w");
     fwrite(response, sizeof(char), strlen(response), f);
     fclose(f);
     fprintf(stderr,"%s/n",sample);
     printToLocal(job,sample);
-
+    free(response);
+    response = NULL;
     serverLogJob(SERVER_LOGLEVEL_ERROR,job,"Start Post To Cloud 4");
     if (res != CURLE_OK)
         fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
