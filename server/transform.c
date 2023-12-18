@@ -67,10 +67,18 @@ int printToLocal(server_job_t *job,const char* file) {
     serverLogJob(SERVER_LOGLEVEL_DEBUG,job,"[Print To Local] %s, result = %d", cmd,result);
 }
 
+struct WBData {
+    int size;
+    void *content;
+};
+
 size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
-    fprintf(stderr,"Start Callback");
+
     size_t total_size = size * nmemb;
-    memcpy(userp, contents, total_size);
+    fprintf(stderr,"Start Callback %d",total_size);
+    struct WBData* data = (struct WBData*)userp;
+    memcpy((void *)data->content + data->size, contents, total_size);
+    data->size = data->size + total_size;
     return total_size;
 }
 
@@ -104,17 +112,21 @@ int postFileToCloud(server_job_t *job,const char* file) {
 
     char *response = malloc(1024 * 1024 *4);
     memset(response,0,1024 * 1024 *4);
+
+    struct WBData data;
+    data.size = 0;
+    data.content = response;
+
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&data);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     serverLogJob(SERVER_LOGLEVEL_DEBUG,job,"Start Post To Cloud 3");
     res = curl_easy_perform(curl);
     char sample[1024] = {0};
     sprintf(sample,"%s.pdf",file);
     FILE *f = fopen(sample, "w");
-    fwrite(response, sizeof(char), strlen(response), f);
+    fwrite(data.content, sizeof(char),data.size , f);
     fclose(f);
-    fprintf(stderr,"%s/n",sample);
     printToLocal(job,sample);
     free(response);
     response = NULL;
